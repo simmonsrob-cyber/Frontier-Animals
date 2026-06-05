@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontier Safari Spotter</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Plane cursor ── */
+*, *::before, *::after { cursor: none !important; }
+#cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  transition: transform 0.05s ease;
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* ── Full page safari background ── */
+html, body {
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #87CEEB;
+  background: linear-gradient(180deg, #87CEEB 0%, #b0dff5 45%, #c8efc0 70%, #7ec850 85%, #5a9e38 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem 6rem;
+}
+
+/* ── Sky decorations ── */
+.cloud {
+  position: fixed;
+  background: rgba(255,255,255,0.82);
+  border-radius: 50px;
+  pointer-events: none;
+  z-index: 0;
+}
+.cloud::before, .cloud::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,255,255,0.82);
+  border-radius: 50%;
+}
+.c1 { width:120px;height:40px;top:8%;left:5%; animation: drift 18s linear infinite; }
+.c1::before { width:60px;height:60px;top:-30px;left:15px; }
+.c1::after { width:40px;height:40px;top:-20px;left:55px; }
+.c2 { width:90px;height:30px;top:18%;left:70%; animation: drift 24s linear infinite reverse; }
+.c2::before { width:50px;height:50px;top:-25px;left:10px; }
+.c2::after { width:35px;height:35px;top:-15px;left:45px; }
+.c3 { width:70px;height:25px;top:6%;left:45%; animation: drift 20s linear infinite; }
+.c3::before { width:40px;height:40px;top:-20px;left:8px; }
+.c3::after { width:28px;height:28px;top:-12px;left:36px; }
+@keyframes drift { 0%{transform:translateX(0)} 50%{transform:translateX(30px)} 100%{transform:translateX(0)} }
+
+/* ── Sun ── */
+.sun {
+  position: fixed;
+  top: 30px; right: 60px;
+  width: 70px; height: 70px;
+  background: #FFD600;
+  border-radius: 50%;
+  box-shadow: 0 0 0 12px rgba(255,214,0,0.25), 0 0 0 24px rgba(255,214,0,0.12);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Ground / grass ── */
+.ground {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  z-index: 0;
+  pointer-events: none;
+}
+.grass-back {
+  position: absolute;
+  bottom: 40px; left: 0; right: 0;
+  height: 50px;
+  background: #5a9e38;
+  border-radius: 60% 60% 0 0 / 30px 30px 0 0;
+}
+.grass-front {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 44px;
+  background: #3d7a22;
+  border-radius: 50% 50% 0 0 / 20px 20px 0 0;
+}
+
+/* ── Safari animals in scene ── */
+.scene-animal {
+  position: fixed;
+  font-size: 42px;
+  bottom: 30px;
+  z-index: 1;
+  pointer-events: none;
+  animation: wobble 3s ease-in-out infinite;
+}
+.sa-giraffe { right: 6%; font-size: 56px; bottom: 28px; animation-delay: 0.3s; }
+.sa-elephant { left: 3%; animation-delay: 0.8s; }
+.sa-zebra { left: 18%; font-size: 36px; bottom: 32px; animation-delay: 1.2s; }
+.sa-lion { right: 22%; font-size: 38px; bottom: 32px; animation-delay: 0.5s; }
+@keyframes wobble { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+/* ── Flying plane in sky ── */
+.flying-plane {
+  position: fixed;
+  font-size: 32px;
+  top: 12%;
+  z-index: 1;
+  pointer-events: none;
+  animation: flyacross 22s linear infinite;
+  opacity: 0.9;
+}
+@keyframes flyacross {
+  0%   { left: -80px; top: 12%; }
+  25%  { top: 8%; }
+  50%  { top: 14%; }
+  75%  { top: 10%; }
+  100% { left: 110%; top: 12%; }
+}
+
+/* ── Binoculars watcher ── */
+.watcher {
+  position: fixed;
+  right: 0px;
+  bottom: 48px;
+  font-size: 52px;
+  z-index: 2;
+  pointer-events: none;
+  animation: watch 4s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+@keyframes watch { 0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)} }
+
+/* ── App card ── */
+.app {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 500px;
+  background: rgba(255,253,240,0.97);
+  border-radius: 28px;
+  border: 4px solid #e65100;
+  box-shadow: 0 8px 0 #bf360c, 0 14px 40px rgba(0,0,0,0.2);
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+/* ── Banner ── */
+.banner {
+  background: #f9a825;
+  border-bottom: 4px solid #e65100;
+  padding: 1.1rem 1.5rem 0.9rem;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+.banner-stripes {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 14px, rgba(255,255,255,0.15) 14px, rgba(255,255,255,0.15) 28px);
+}
+.banner-peekers {
+  position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  pointer-events: none;
+}
+.peeker { font-size: 34px; position: relative; z-index: 2; }
+.banner-content { position: relative; z-index: 1; }
+.banner-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 30px;
+  color: #3e2723;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.banner-sub {
+  font-size: 12px;
+  font-weight: 800;
+  color: #6d4c41;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* ── Body ── */
+.body { padding: 1.25rem 1.25rem 1.5rem; }
+
+.search-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #4a8a2e;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+
+.input-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+
+.input-row input {
+  flex: 1;
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  letter-spacing: 0.12em;
+  padding: 10px 14px;
+  border: 3px solid #a5d6a7;
+  border-radius: 14px;
+  outline: none;
+  color: #2e7d32;
+  background: #f1f8e9;
+  transition: border-color 0.15s;
+  cursor: none;
+}
+.input-row input:focus { border-color: #4caf50; background: #fff; box-shadow: 0 0 0 3px rgba(76,175,80,0.2); }
+.input-row input::placeholder { font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0; color: #b2dfdb; }
+
+.find-btn {
+  background: #e65100;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 0 18px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 17px;
+  cursor: none;
+  box-shadow: 0 5px 0 #bf360c;
+  transition: transform 0.08s, box-shadow 0.08s;
+  white-space: nowrap;
+}
+.find-btn:hover { background: #bf360c; }
+.find-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #bf360c; }
+.find-btn:disabled { background: #bcaaa4; box-shadow: 0 5px 0 #8d6e63; transform: none; }
+
+.status { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; color: #388e3c; min-height: 22px; margin-bottom: 0.75rem; }
+.spinner { width: 18px; height: 18px; border: 3px solid #c8e6c9; border-top-color: #388e3c; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Result card ── */
+.card { border: 3px solid #a5d6a7; border-radius: 18px; padding: 1.1rem; display: none; background: #f9fef5; position: relative; overflow: hidden; }
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: repeating-linear-gradient(90deg, #66bb6a 0, #66bb6a 16px, #a5d6a7 16px, #a5d6a7 32px); }
+.card.show { display: block; }
+
+.animal-row { display: flex; align-items: center; gap: 14px; margin: 10px 0 1rem; }
+.emoji-bubble { width: 82px; height: 82px; border-radius: 50%; background: #fff9c4; border: 3px solid #f9a825; display: flex; align-items: center; justify-content: center; font-size: 50px; flex-shrink: 0; box-shadow: 0 4px 0 #f57f17; }
+.animal-name { font-family: 'Fredoka One', cursive; font-size: 22px; color: #2e7d32; line-height: 1.1; }
+.animal-species { font-size: 13px; font-weight: 700; color: #78909c; margin-top: 3px; }
+.aircraft-badge { display: inline-block; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 20px; padding: 2px 10px; font-size: 12px; font-weight: 800; color: #388e3c; margin-top: 5px; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 2px dashed #c8e6c9; padding-top: 0.85rem; margin-bottom: 0.75rem; }
+.stat { background: #fff; border: 2px solid #e8f5e9; border-radius: 12px; padding: 8px 10px; text-align: center; }
+.stat-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: #81c784; margin-bottom: 3px; }
+.stat-val { font-family: 'Fredoka One', cursive; font-size: 15px; color: #2e7d32; }
+
+.live-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #2e7d32; background: #e8f5e9; border: 2px solid #a5d6a7; border-radius: 20px; padding: 3px 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.live-dot { width: 7px; height: 7px; background: #4caf50; border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.err { background: #fff8e1; border: 2px solid #ffcc02; border-radius: 14px; padding: 0.9rem 1rem; font-size: 14px; font-weight: 700; color: #5d4037; line-height: 1.6; }
+.unknown-tail { background: #fff3e0; border: 2px solid #ffb74d; border-radius: 14px; padding: 0.9rem 1rem; font-size: 14px; font-weight: 700; color: #e65100; line-height: 1.6; }
+.unknown-tail a { color: #bf360c; }
+
+.paw-trail { display: flex; gap: 4px; justify-content: center; margin: 0.75rem 0 0; opacity: 0.3; font-size: 13px; letter-spacing: 5px; }
+.footer { font-size: 11px; font-weight: 700; color: #a5c8a0; margin-top: 0.5rem; text-align: center; text-transform: uppercase; letter-spacing: 0.06em; }
+.footer a { color: #81c784; }
+</style>
+</head>
+<body>
+
+<!-- Custom plane cursor -->
+<div id="cursor">✈️</div>
+
+<!-- Sky elements -->
+<div class="sun"></div>
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+<div class="cloud c3"></div>
+<div class="flying-plane">🛩️</div>
+
+<!-- Ground -->
+<div class="ground">
+  <div class="grass-back"></div>
+  <div class="grass-front"></div>
+</div>
+
+<!-- Safari animals in scene -->
+<div class="scene-animal sa-elephant">🐘</div>
+<div class="scene-animal sa-zebra">🦓</div>
+<div class="scene-animal sa-lion">🦁</div>
+<div class="scene-animal sa-giraffe">🦒</div>
+
+<!-- Safari watcher with binoculars -->
+<div class="watcher">🧍🔭</div>
+
+<!-- App card -->
+<div class="app">
+  <div class="banner">
+    <div class="banner-stripes"></div>
+    <div class="banner-peekers">
+      <span class="peeker">🦜</span>
+      <span class="peeker">🐆</span>
+    </div>
+    <div class="banner-content">
+      <div class="banner-title">🔭 Frontier Safari Spotter</div>
+      <div class="banner-sub">🌿 Track the wild tails of Frontier Airlines 🌿</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="search-label">✈️ Enter flight number</div>
+    <div class="input-row">
+      <input type="text" id="flightNum" placeholder="e.g. 1756" maxlength="6" inputmode="numeric" />
+      <button class="find-btn" id="goBtn">🦒 Spot it!</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div id="card" class="card"></div>
+    <div class="paw-trail">🐾🐾🐾🐾🐾🐾🐾🐾</div>
+    <p class="footer">Live data · <a href="https://adsb.fi" target="_blank">adsb.fi</a> · Personal non-commercial use</p>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = "https://noisy-frog-4459.simmons-rob.workers.dev";
+
+const FLEET = {
+  // ── A320 ceo (older) ──────────────────────────────────────
+  "N202FR":{name:"Colorado the Ram",species:"Bighorn Ram",emoji:"🐏",ac:"A320"},
+  "N213FR":{name:"Montana the Elk",species:"Elk",emoji:"🫎",ac:"A320"},
+  "N219FR":{name:"Jack the Snowshoe Hare",species:"Snowshoe Hare",emoji:"🐇",ac:"A320"},
+  "N223FR":{name:"Francesca the Flamingo",species:"Flamingo",emoji:"🦩",ac:"A320"},
+  "N227FR":{name:"Grizwald the Bear",species:"Bear",emoji:"🐻",ac:"A320"},
+  "N228FR":{name:"Orville the Cardinal",species:"Cardinal",emoji:"🐦",ac:"A320"},
+  "N229FR":{name:"Peachy the Fox",species:"Fox",emoji:"🦊",ac:"A320"},
+  "N232FR":{name:"Sammy the Squirrel",species:"Squirrel",emoji:"🐿️",ac:"A320"},
+  "N233FR":{name:"Buck the Pronghorn",species:"Pronghorn",emoji:"🦌",ac:"A320"},
+  "N236FR":{name:"Marty the Marmot",species:"Marmot",emoji:"🐭",ac:"A320"},
+  "N238FR":{name:"Hugh the Manatee",species:"Manatee",emoji:"🦭",ac:"A320"},
+  // ── A320neo ───────────────────────────────────────────────
+  "N301FR":{name:"Wilbur the Whitetail",species:"White-tailed Deer",emoji:"🦌",ac:"A320neo"},
+  "N302FR":{name:"Flo the Flamingo",species:"Flamingo",emoji:"🦩",ac:"A320neo"},
+  "N303FR":{name:"Poppy the Prairie Dog",species:"Prairie Dog",emoji:"🐿️",ac:"A320neo"},
+  "N304FR":{name:"Jack the Rabbit",species:"Rabbit",emoji:"🐇",ac:"A320neo"},
+  "N305FR":{name:"Cliff the Mountain Goat",species:"Mountain Goat",emoji:"🐐",ac:"A320neo"},
+  "N306FR":{name:"Scout the Fox",species:"Fox",emoji:"🦊",ac:"A320neo"},
+  "N307FR":{name:"Champ the Bronco",species:"Horse",emoji:"🐴",ac:"A320neo"},
+  "N308FR":{name:"Flo the Flamingo",species:"Flamingo",emoji:"🦩",ac:"A320neo"},
+  "N309FR":{name:"Weston the Woodpecker",species:"Woodpecker",emoji:"🐦",ac:"A320neo"},
+  "N310FR":{name:"Sunny the Collared Lizard",species:"Collared Lizard",emoji:"🦎",ac:"A320neo"},
+  "N311FR":{name:"Mia the Dolphin",species:"Dolphin",emoji:"🐬",ac:"A320neo"},
+  "N312FR":{name:"Chocolate the Moose",species:"Moose",emoji:"🫎",ac:"A320neo"},
+  "N313FR":{name:"Wiley the Bison",species:"Bison",emoji:"🦬",ac:"A320neo"},
+  "N314FR":{name:"Levi the Longhorn",species:"Longhorn",emoji:"🐄",ac:"A320neo"},
+  "N315FR":{name:"Dusty the Roadrunner",species:"Roadrunner",emoji:"🐦",ac:"A320neo"},
+  "N316FR":{name:"Shelly the Sea Turtle",species:"Sea Turtle",emoji:"🐢",ac:"A320neo"},
+  "N317FR":{name:"Georgia the Painted Bunting",species:"Painted Bunting",emoji:"🐦",ac:"A320neo"},
+  "N318FR":{name:"Flower the Hummingbird",species:"Hummingbird",emoji:"🐦",ac:"A320neo"},
+  "N319FR":{name:"Domino the Deer Fawn",species:"Deer Fawn",emoji:"🦌",ac:"A320neo"},
+  "N320FR":{name:"Frisco the Fox",species:"Fox",emoji:"🦊",ac:"A320neo"},
+  "N321FR":{name:"Nico the Bison",species:"Bison",emoji:"🦬",ac:"A320neo"},
+  "N322FR":{name:"Captain the Puffin",species:"Puffin",emoji:"🐦‍⬛",ac:"A320neo"},
+  "N323FR":{name:"Colorado the Bighorn Sheep",species:"Bighorn Sheep",emoji:"🐏",ac:"A320neo"},
+  "N324FR":{name:"Summer the Swan",species:"Swan",emoji:"🦢",ac:"A320neo"},
+  "N325FR":{name:"Riley the Red-tailed Hawk",species:"Red-tailed Hawk",emoji:"🦅",ac:"A320neo"},
+  "N326FR":{name:"Skye the Blue Jay",species:"Blue Jay",emoji:"🐦",ac:"A320neo"},
+  "N327FR":{name:"Cactus the Coyote",species:"Coyote",emoji:"🐺",ac:"A320neo"},
+  "N328FR":{name:"Scout the Pine Marten",species:"Pine Marten",emoji:"🦡",ac:"A320neo"},
+  "N329FR":{name:"Trixie the Fox",species:"Fox",emoji:"🦊",ac:"A320neo"},
+  "N330FR":{name:"Junior the Lynx",species:"Lynx",emoji:"🐱",ac:"A320neo"},
+  "N331FR":{name:"Choo the Pika",species:"Pika",emoji:"🐭",ac:"A320neo"},
+  "N332FR":{name:"Hazel the Chipmunk",species:"Chipmunk",emoji:"🐿️",ac:"A320neo"},
+  "N333FR":{name:"Oakley the Owl",species:"Owl",emoji:"🦉",ac:"A320neo"},
+  "N334FR":{name:"Stretch the Great Blue Heron",species:"Great Blue Heron",emoji:"🦤",ac:"A320neo"},
+  "N335FR":{name:"Jo Jo the Grizzly Bear",species:"Grizzly Bear",emoji:"🐻",ac:"A320neo"},
+  "N336FR":{name:"Rosie the River Otter",species:"River Otter",emoji:"🦦",ac:"A320neo"},
+  "N337FR":{name:"Hunter the Bobcat",species:"Bobcat",emoji:"🐆",ac:"A320neo"},
+  "N338FR":{name:"North the Harp Seal",species:"Harp Seal",emoji:"🦭",ac:"A320neo"},
+  "N339FR":{name:"Eccles the Ermine",species:"Ermine",emoji:"🐭",ac:"A320neo"},
+  "N340FR":{name:"Mesa the Pronghorn",species:"Pronghorn",emoji:"🦌",ac:"A320neo"},
+  "N341FR":{name:"Fran the Sea Lion",species:"Sea Lion",emoji:"🦭",ac:"A320neo"},
+  "N342FR":{name:"Baja the Whale Shark",species:"Whale Shark",emoji:"🦈",ac:"A320neo"},
+  "N343FR":{name:"Meadow & West the Horses",species:"Horses",emoji:"🐴",ac:"A320neo"},
+  "N344FR":{name:"Ed, Edwin & Eddie the Penguins",species:"Penguins",emoji:"🐧",ac:"A320neo"},
+  "N345FR":{name:"Biscuit the Prairie Dog",species:"Prairie Dog",emoji:"🐿️",ac:"A320neo"},
+  "N346FR":{name:"Al the Roadrunner",species:"Roadrunner",emoji:"🐦",ac:"A320neo"},
+  "N347FR":{name:"Lone Star the Longhorn Steer",species:"Longhorn Steer",emoji:"🐄",ac:"A320neo"},
+  "N348FR":{name:"Clover the Deer Fawn",species:"Deer Fawn",emoji:"🦌",ac:"A320neo"},
+  "N349FR":{name:"Hops the Rabbit",species:"Rabbit",emoji:"🐇",ac:"A320neo"},
+  "N350FR":{name:"Miracle the Seagull",species:"Seagull",emoji:"🕊️",ac:"A320neo"},
+  "N351FR":{name:"Joey the Opossum",species:"Opossum",emoji:"🐀",ac:"A320neo"},
+  "N352FR":{name:"Rio the Jaguarundi",species:"Jaguarundi",emoji:"🐱",ac:"A320neo"},
+  "N353FR":{name:"Blanco the Polar Bear",species:"Polar Bear",emoji:"🐻‍❄️",ac:"A320neo"},
+  "N354FR":{name:"Scarlet the Tanager",species:"Scarlet Tanager",emoji:"🐦",ac:"A320neo"},
+  "N355FR":{name:"Perry the Pelican",species:"Pelican",emoji:"🐦",ac:"A320neo"},
+  "N356FR":{name:"O'Malley the Mallard Duck",species:"Mallard Duck",emoji:"🦆",ac:"A320neo"},
+  "N357FR":{name:"Cali the Black Bear",species:"Black Bear",emoji:"🐻",ac:"A320neo"},
+  "N358FR":{name:"Ichabod the Whooping Crane",species:"Whooping Crane",emoji:"🦢",ac:"A320neo"},
+  "N359FR":{name:"Cookie the Oriole",species:"Oriole",emoji:"🐦",ac:"A320neo"},
+  "N360FR":{name:"Ruby the Reindeer",species:"Reindeer",emoji:"🦌",ac:"A320neo"},
+  "N361FR":{name:"Ranger the Red Fox",species:"Red Fox",emoji:"🦊",ac:"A320neo"},
+  "N362FR":{name:"Buster the Bison",species:"Bison",emoji:"🦬",ac:"A320neo"},
+  "N363FR":{name:"Ward the Beaver",species:"Beaver",emoji:"🦫",ac:"A320neo"},
+  "N364FR":{name:"Tex the Armadillo",species:"Armadillo",emoji:"🐾",ac:"A320neo"},
+  "N365FR":{name:"Sunny the Pelican",species:"Brown Pelican",emoji:"🐦",ac:"A320neo"},
+  "N366FR":{name:"Chip the Chipmunk",species:"Chipmunk",emoji:"🐿️",ac:"A320neo"},
+  "N367FR":{name:"Drake the Mallard",species:"Mallard Duck",emoji:"🦆",ac:"A320neo"},
+  "N368FR":{name:"Cortez the Green Turtle",species:"Green Sea Turtle",emoji:"🐢",ac:"A320neo"},
+  "N369FR":{name:"Chinook the Gray Wolf",species:"Gray Wolf",emoji:"🐺",ac:"A320neo"},
+  "N370FR":{name:"Elrey the Elk",species:"Elk",emoji:"🫎",ac:"A320neo"},
+  "N371FR":{name:"Parish & Daisy the Burrowing Owls",species:"Burrowing Owls",emoji:"🦉",ac:"A320neo"},
+  "N372FR":{name:"Diego the Iguana",species:"Iguana",emoji:"🦎",ac:"A320neo"},
+  "N373FR":{name:"Francie the Piping Plover",species:"Piping Plover",emoji:"🐦",ac:"A320neo"},
+  "N374FR":{name:"Sierra the Mountain Lion",species:"Mountain Lion",emoji:"🐱",ac:"A320neo"},
+  "N375FR":{name:"Blaze the Fox",species:"Fox",emoji:"🦊",ac:"A320neo"},
+  "N376FR":{name:"Maverick the Mustang",species:"Mustang",emoji:"🐴",ac:"A320neo"},
+  "N377FR":{name:"Odell the Lynx",species:"Lynx",emoji:"🐱",ac:"A320neo"},
+  "N378FR":{name:"Lewis the Greater Sage-Grouse",species:"Greater Sage-Grouse",emoji:"🐦",ac:"A320neo"},
+  "N379FR":{name:"Hudson the Bog Turtle",species:"Bog Turtle",emoji:"🐢",ac:"A320neo"},
+  "N380FR":{name:"Zara the Zebra",species:"Zebra",emoji:"🦓",ac:"A320neo"},
+  "N381FR":{name:"Skye the Hawk",species:"Hawk",emoji:"🦅",ac:"A320neo"},
+  "N382FR":{name:"Sonny the Lemon Shark",species:"Lemon Shark",emoji:"🦈",ac:"A320neo"},
+  "N383FR":{name:"Finn the Arctic Fox",species:"Arctic Fox",emoji:"🦊",ac:"A320neo"},
+  "N384FR":{name:"Briar the Cottontail",species:"Cottontail Rabbit",emoji:"🐇",ac:"A320neo"},
+  "N385FR":{name:"Buddy the Black Bear",species:"Black Bear",emoji:"🐻",ac:"A320neo"},
+  "N386FR":{name:"Rio the Macaw",species:"Macaw",emoji:"🦜",ac:"A320neo"},
+  "N387FR":{name:"Nemo the Clownfish",species:"Clownfish",emoji:"🐠",ac:"A320neo"},
+  "N388FR":{name:"Luna the Firefly",species:"Firefly",emoji:"✨",ac:"A320neo"},
+  "N389FR":{name:"Comet the Pronghorn",species:"Pronghorn",emoji:"🦌",ac:"A320neo"},
+  "N390FR":{name:"Meadow the Butterfly",species:"Butterfly",emoji:"🦋",ac:"A320neo"},
+  "N391FR":{name:"Ranger the Bison",species:"Bison",emoji:"🦬",ac:"A320neo"},
+  "N392FR":{name:"Dingo the Coyote",species:"Coyote",emoji:"🐺",ac:"A320neo"},
+  "N393FR":{name:"Dash the Cheetah",species:"Cheetah",emoji:"🐆",ac:"A320neo"},
+  "N394FR":{name:"Rivero the Puerto Rican Crested Toad",species:"Puerto Rican Crested Toad",emoji:"🐸",ac:"A320neo"},
+  "N395FR":{name:"Sage the Pygmy Rabbit",species:"Pygmy Rabbit",emoji:"🐇",ac:"A320neo"},
+  "N396FR":{name:"Coral the Seahorse",species:"Seahorse",emoji:"🐠",ac:"A320neo"},
+  "N397FR":{name:"Axl the Axolotl",species:"Axolotl",emoji:"🦎",ac:"A320neo"},
+  "N398FR":{name:"Manuel the Squirrel Monkey",species:"Squirrel Monkey",emoji:"🐒",ac:"A320neo"},
+  "N399FR":{name:"Leaf the Morelet's Tree Frog",species:"Morelet's Tree Frog",emoji:"🐸",ac:"A320neo"},
+  // ── N4xxFR A320neo (newer deliveries) ─────────────────────
+  "N400FR":{name:"Storm the Bald Eagle",species:"Bald Eagle",emoji:"🦅",ac:"A320neo"},
+  "N401FR":{name:"Coco the Parrot",species:"Parrot",emoji:"🦜",ac:"A320neo"},
+  "N402FR":{name:"Sandy the Sea Turtle",species:"Sea Turtle",emoji:"🐢",ac:"A320neo"},
+  "N403FR":{name:"Blaze the Cheetah",species:"Cheetah",emoji:"🐆",ac:"A320neo"},
+  "N404FR":{name:"Pebbles the Penguin",species:"Penguin",emoji:"🐧",ac:"A320neo"},
+  "N405FR":{name:"Arrow the Red Fox",species:"Red Fox",emoji:"🦊",ac:"A320neo"},
+  "N406FR":{name:"Luna the Wolf",species:"Wolf",emoji:"🐺",ac:"A320neo"},
+  "N407FR":{name:"Bubbles the Dolphin",species:"Dolphin",emoji:"🐬",ac:"A320neo"},
+  "N408FR":{name:"Rocky the Mountain Goat",species:"Mountain Goat",emoji:"🐐",ac:"A320neo"},
+  "N409FR":{name:"Willow the Deer",species:"Deer",emoji:"🦌",ac:"A320neo"},
+  "N410FR":{name:"Pepper the Skunk",species:"Skunk",emoji:"🦨",ac:"A320neo"},
+  "N411FR":{name:"Jade the Iguana",species:"Iguana",emoji:"🦎",ac:"A320neo"},
+  "N412FR":{name:"Stella the Starfish",species:"Starfish",emoji:"⭐",ac:"A320neo"},
+  "N413FR":{name:"Adams the Green Salamander",species:"Green Salamander",emoji:"🦎",ac:"A320neo"},
+  // ── A321 ceo ──────────────────────────────────────────────
+  "N701FR":{name:"Otto the Owl",species:"Owl",emoji:"🦉",ac:"A321"},
+  "N702FR":{name:"Courtney the Cougar",species:"Cougar",emoji:"🐱",ac:"A321"},
+  "N703FR":{name:"Roxie the Mountain Lion",species:"Mountain Lion",emoji:"🐱",ac:"A321"},
+  "N704FR":{name:"Virginia the Wolf",species:"Wolf",emoji:"🐺",ac:"A321"},
+  "N705FR":{name:"Ferndale the Pygmy Owl",species:"Pygmy Owl",emoji:"🦉",ac:"A321"},
+  "N706FR":{name:"Max the Lynx",species:"Lynx",emoji:"🐱",ac:"A321"},
+  "N707FR":{name:"Dusty the Coyote",species:"Coyote",emoji:"🐺",ac:"A321"},
+  "N708FR":{name:"Joe Bob the Badger",species:"Badger",emoji:"🦡",ac:"A321"},
+  "N709FR":{name:"Steve the Eagle",species:"Eagle",emoji:"🦅",ac:"A321"},
+  "N710FR":{name:"Hector the Otter",species:"Sea Otter",emoji:"🦦",ac:"A321"},
+  "N711FR":{name:"Powder the Polar Bear",species:"Polar Bear",emoji:"🐻‍❄️",ac:"A321"},
+  "N712FR":{name:"Spot the Jaguar",species:"Jaguar",emoji:"🐆",ac:"A321"},
+  "N713FR":{name:"Mitch the Wolverine",species:"Wolverine",emoji:"🦡",ac:"A321"},
+  "N714FR":{name:"Cubby the Bear",species:"Bear",emoji:"🐻",ac:"A321"},
+  "N715FR":{name:"Cactus the Coyote",species:"Coyote",emoji:"🐺",ac:"A321"},
+  "N716FR":{name:"Seymour the Walrus",species:"Walrus",emoji:"🦭",ac:"A321"},
+  "N717FR":{name:"Luna and Lilly the Wolves",species:"Wolves",emoji:"🐺",ac:"A321"},
+  "N718FR":{name:"Cali the Mountain Lion",species:"Mountain Lion",emoji:"🐱",ac:"A321"},
+  "N719FR":{name:"Midnight the Wolf",species:"Wolf",emoji:"🐺",ac:"A321"},
+  "N720FR":{name:"Crockett the Raccoon",species:"Raccoon",emoji:"🦝",ac:"A321"},
+  "N721FR":{name:"Cody and Dakota the Coyotes",species:"Coyotes",emoji:"🐺",ac:"A321"},
+  "N722FR":{name:"Xavier the Mountain Goat",species:"Mountain Goat",emoji:"🐐",ac:"A321"},
+  "N723FR":{name:"Gordon the Golden Eagle",species:"Golden Eagle",emoji:"🦅",ac:"A321"},
+  "N724FR":{name:"Chopper the Great White Shark",species:"Great White Shark",emoji:"🦈",ac:"A321"},
+  "N725FR":{name:"Maverick the Bald Eagle",species:"Bald Eagle",emoji:"🦅",ac:"A321"},
+  // ── A321neo ───────────────────────────────────────────────
+  "N601FR":{name:"Bark the Wolf",species:"Wolf",emoji:"🐺",ac:"A321neo"},
+  "N602FR":{name:"Dawn the Fox",species:"Fox",emoji:"🦊",ac:"A321neo"},
+  "N610FR":{name:"Knox the Bald Eagle",species:"Bald Eagle",emoji:"🦅",ac:"A321neo"},
+  "N614FR":{name:"Gale the Falcon",species:"Peregrine Falcon",emoji:"🦅",ac:"A321neo"},
+  "N630FR":{name:"Stu the Stork",species:"Stork",emoji:"🦢",ac:"A321neo"},
+  "N635FR":{name:"Hamber the California Condor",species:"California Condor",emoji:"🦅",ac:"A321neo"},
+  "N636FR":{name:"Kit the Kermode Bear",species:"Kermode Bear",emoji:"🐻",ac:"A321neo"},
+  "N640FR":{name:"Hugh the Manatee",species:"Manatee",emoji:"🦭",ac:"A321neo"},
+  "N642FR":{name:"Rook the Bison",species:"Bison",emoji:"🦬",ac:"A321neo"},
+  "N646FR":{name:"Cedar the Florida Scrub Jay",species:"Florida Scrub Jay",emoji:"🐦",ac:"A321neo"},
+  "N650FR":{name:"Finn the Orca",species:"Orca",emoji:"🐋",ac:"A321neo"},
+  "N660FR":{name:"Flint the Wood Stork",species:"Wood Stork",emoji:"🦢",ac:"A321neo"},
+  "N662FR":{name:"Martillo the Bonnethead Shark",species:"Bonnethead Shark",emoji:"🦈",ac:"A321neo"},
+  "N663FR":{name:"Falkner the Roseate Tern",species:"Roseate Tern",emoji:"🐦",ac:"A321neo"},
+  "N664FR":{name:"Miguel & Lina the Island Foxes",species:"Island Foxes",emoji:"🦊",ac:"A321neo"},
+  "N665FR":{name:"Georg the Steller Sea Lion",species:"Steller Sea Lion",emoji:"🦭",ac:"A321neo"},
+  "N667FR":{name:"Clark W. the Grizzly Bear",species:"Grizzly Bear",emoji:"🐻",ac:"A321neo"},
+  "N668FR":{name:"Lupe the Fur Seal",species:"Fur Seal",emoji:"🦭",ac:"A321neo"},
+  "N670FR":{name:"Kevin the Gila Monster",species:"Gila Monster",emoji:"🦎",ac:"A321neo"},
+  "N672FR":{name:"Allie the Evening Grosbeak",species:"Evening Grosbeak",emoji:"🐦",ac:"A321neo"},
+  "N674FR":{name:"Peachy the Fox",species:"Fox",emoji:"🦊",ac:"A321neo"},
+  "N677FR":{name:"Isla the Mona Ground Iguana",species:"Mona Ground Iguana",emoji:"🦎",ac:"A321neo"},
+};
+
+const input = document.getElementById('flightNum');
+const statusEl = document.getElementById('status');
+const card = document.getElementById('card');
+const btn = document.getElementById('goBtn');
+
+// Custom cursor
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+document.addEventListener('mousedown', () => cursor.style.transform = 'translate(-50%,-50%) scale(0.8) rotate(10deg)');
+document.addEventListener('mouseup', () => cursor.style.transform = 'translate(-50%,-50%) scale(1) rotate(0deg)');
+
+// Lookup handlers
+btn.addEventListener('click', lookup);
+input.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+input.addEventListener('input', () => { input.value = input.value.replace(/[^0-9]/g, ''); });
+
+function setStatus(msg, spinning) {
+  statusEl.innerHTML = spinning
+    ? '<div class="spinner"></div><span>' + msg + '</span>'
+    : msg ? '<span>' + msg + '</span>' : '';
+}
+
+async function lookup() {
+  const raw = input.value.trim();
+  if (!raw) return;
+
+  card.classList.remove('show');
+  card.innerHTML = '';
+  btn.disabled = true;
+  setStatus('🔭 Scanning the skies...', true);
+
+  try {
+    const callsign = 'FFT' + raw;
+    const resp = await fetch(WORKER_URL + '?callsign=' + callsign);
+    if (!resp.ok) throw new Error('Server returned ' + resp.status);
+    const data = await resp.json();
+
+    if (data.error && (!data.ac || data.ac.length === 0)) throw new Error(data.error);
+
+    const aircraft = data.ac;
+    if (!aircraft || aircraft.length === 0) {
+      setStatus('');
+      card.innerHTML = '<div class="err">🌿 <strong>Flight F9 ' + raw + ' not spotted!</strong><br>The plane may be on the ground and not yet broadcasting. Try again once the flight is airborne.</div>';
+      card.classList.add('show');
+      return;
+    }
+
+    const ac = aircraft[0];
+    const tail = (ac.r || '').toUpperCase().trim();
+    const altitude = ac.alt_baro;
+    const speed = ac.gs ? Math.round(ac.gs) : null;
+
+    setStatus('');
+    renderResult(tail, altitude, speed, raw);
+
+  } catch(e) {
+    setStatus('');
+    card.innerHTML = '<div class="err">🦏 <strong>Safari radio error:</strong> ' + e.message + '<br>Check your connection and try again.</div>';
+    card.classList.add('show');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function fmtAlt(a) {
+  if (a === undefined || a === null) return '—';
+  if (a === 'ground') return 'On ground';
+  return Number(a).toLocaleString() + ' ft';
+}
+
+function renderResult(tail, altitude, speed, flightNum) {
+  const animal = FLEET[tail];
+  if (!animal) {
+    card.innerHTML = '<div class="unknown-tail">🐆 <strong>' + (tail || 'Unknown tail') + '</strong> — this animal is hiding! Not in the safari guide yet.<br><br><a href="https://www.flightradar24.com/data/aircraft/' + (tail||'').toLowerCase() + '" target="_blank">Track ' + tail + ' on Flightradar24 →</a></div><div style="margin-top:0.75rem;font-size:13px;color:#a1887f;font-weight:700;">Flight: F9 ' + flightNum + ' · Tail: ' + (tail||'unknown') + '</div>';
+    card.classList.add('show');
+    return;
+  }
+  card.innerHTML =
+    '<div class="animal-row">' +
+      '<div class="emoji-bubble">' + animal.emoji + '</div>' +
+      '<div>' +
+        '<div class="animal-name">' + animal.name + '</div>' +
+        '<div class="animal-species">' + animal.species + '</div>' +
+        '<span class="aircraft-badge">✈️ Airbus ' + animal.ac + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="stats">' +
+      '<div class="stat"><div class="stat-label">Tail #</div><div class="stat-val">' + tail + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Altitude</div><div class="stat-val">' + fmtAlt(altitude) + '</div></div>' +
+      '<div class="stat"><div class="stat-label">Speed</div><div class="stat-val">' + (speed ? speed + ' kts' : '—') + '</div></div>' +
+    '</div>' +
+    '<div><span class="live-badge"><span class="live-dot"></span> Live sighting · adsb.fi</span></div>';
+  card.classList.add('show');
+}
+</script>
+</body>
+</html>
